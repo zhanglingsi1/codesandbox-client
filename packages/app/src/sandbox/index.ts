@@ -17,8 +17,8 @@ import {
 } from 'sandpack-core/lib/sandpack-secret';
 import compile, { getCurrentManager } from './compile';
 
-const host = process.env.CODESANDBOX_HOST;
-const withServiceWorker = !process.env.SANDPACK;
+const host = process.env.CODESANDBOX_HOST || '/i2c';
+// const withServiceWorker = !process.env.SANDPACK;
 const debug = _debug('cs:sandbox');
 
 export const SCRIPT_VERSION =
@@ -30,9 +30,8 @@ debug('Booting sandbox v2');
 endMeasure('boot', { lastTime: 0, displayName: 'Boot' });
 
 requirePolyfills().then(() => {
-  if (withServiceWorker) {
-    registerServiceWorker('/sandbox-service-worker.js', {});
-  }
+  // 统一开启service-worker缓存功能
+  registerServiceWorker(`${process.env.PUBLIC_URL || ''}/sandbox-service-worker.js`, {});
 
   function sendReady() {
     dispatch({ type: 'initialized', url: document.location.href });
@@ -54,7 +53,6 @@ requirePolyfills().then(() => {
         ) {
           return;
         }
-
         compile(data);
         isInitializationCompile = false;
       } else if (data.type === 'get-transpiler-context') {
@@ -156,6 +154,6 @@ requirePolyfills().then(() => {
 /**
  * For tracking purpose
  */
-document.addEventListener('click', () => {
-  dispatch({ type: 'document-focus' });
+document.addEventListener('click', (e) => {
+  dispatch({ type: 'document-focus', message: e.target?.id });
 });

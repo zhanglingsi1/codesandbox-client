@@ -463,7 +463,7 @@ export default function(isVSCode: boolean, requiredModule?: string[]) {
   };
   Component.prototype.generateLoaderConfig = function(dest) {
     dest[this.modulePrefix] =
-      process.env.CODESANDBOX_HOST + this.getResolvedPath();
+      (process.env.CODESANDBOX_HOST || '/i2c') + this.getResolvedPath();
   };
   Component.prototype.generateUrlForPath = function(pathName) {
     var NEW_LOADER_OPTS = {};

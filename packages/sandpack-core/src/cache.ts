@@ -8,7 +8,7 @@ import { SerializedTranspiledModule } from './transpiled-module';
 
 const debug = _debug('cs:compiler:cache');
 
-const host = process.env.CODESANDBOX_HOST;
+const host = process.env.CODESANDBOX_HOST || '/i2c';
 localforage.defineDriver(memoryDriver);
 localforage.setDriver([
   localforage.INDEXEDDB,
@@ -73,8 +73,8 @@ export async function saveCache(
     if (process.env.NODE_ENV === 'development') {
       debug(
         'Saving cache of ' +
-          (JSON.stringify(managerState).length / 1024).toFixed(2) +
-          'kb to indexedDB'
+        (JSON.stringify(managerState).length / 1024).toFixed(2) +
+        'kb to indexedDB'
       );
     }
 
@@ -95,8 +95,8 @@ export async function saveCache(
 
     debug(
       'Saving cache of ' +
-        (stringifiedManagerState.length / 1024).toFixed(2) +
-        'kb to CodeSandbox API'
+      (stringifiedManagerState.length / 1024).toFixed(2) +
+      'kb to CodeSandbox API'
     );
 
     return window
@@ -186,6 +186,8 @@ export function ignoreNextCache() {
   }
 }
 
+// 通过 localforage 从浏览器数据存储中（indexDB/localStorage 等）读取上次构建应用的编译结果，
+// 从而减少二次构建时间
 export async function consumeCache(manager: Manager) {
   if (!manager.id) {
     return false;

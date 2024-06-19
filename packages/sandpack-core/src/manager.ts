@@ -441,6 +441,7 @@ export default class Manager implements IEvaluator {
       return {};
     }
 
+    // 优先执行变更的模块--热更新
     // Evaluate the *changed* HMR modules first
     this.getTranspiledModules()
       .filter(t => t.hmrConfig && t.hmrConfig.isDirty())
@@ -900,7 +901,7 @@ export default class Manager implements IEvaluator {
           (this.manifest.dependencies.find(d => d.name === dependencyName) ||
             this.manifest.dependencyDependencies[dependencyName] ||
             this.manifest.contents[
-              `/node_modules/${dependencyName}/package.json`
+            `/node_modules/${dependencyName}/package.json`
             ])
         ) {
           throw new ModuleNotFoundError(connectedPath, true, parentPath);
@@ -1035,7 +1036,7 @@ export default class Manager implements IEvaluator {
           (this.manifest.dependencies.find(d => d.name === dependencyName) ||
             this.manifest.dependencyDependencies[dependencyName] ||
             this.manifest.contents[
-              `/node_modules/${dependencyName}/package.json`
+            `/node_modules/${dependencyName}/package.json`
             ])
         ) {
           throw new ModuleNotFoundError(connectedPath, true, parentPath);
@@ -1204,6 +1205,7 @@ export default class Manager implements IEvaluator {
   /**
    * Find all changed, added and deleted modules. Update trees and
    * delete caches accordingly
+   * 查找更新的模块
    */
   async updateData(modules: {
     [path: string]: Module;
@@ -1224,8 +1226,10 @@ export default class Manager implements IEvaluator {
       const mirrorModule = this.transpiledModules[k];
 
       if (!mirrorModule) {
+        // 如果是之前不存在的模块，则直接加入到 addedModules 数组中
         addedModules.push(module);
       } else if (mirrorModule.module.code !== module.code) {
+        // 如果是存在的模块，则比对新旧代码，如果不同则加入到 updatedModules 数组中
         updatedModules.push(module);
       }
     });
@@ -1246,6 +1250,7 @@ export default class Manager implements IEvaluator {
       this.addTranspiledModule(m);
     });
 
+    // 将新增的模块和修改的模块合并到 modulesToUpdate 数组，即需要重新执行的模块
     const modulesToUpdate: Array<Module> = uniq([
       ...addedModules,
       ...updatedModules,
@@ -1320,8 +1325,8 @@ export default class Manager implements IEvaluator {
       entryPath,
       optimizeForSize,
     }: { entryPath?: string; optimizeForSize: boolean } = {
-      optimizeForSize: true,
-    }
+        optimizeForSize: true,
+      }
   ): Promise<ManagerCache> {
     const serializedTModules: { [id: string]: SerializedTranspiledModule } = {};
 

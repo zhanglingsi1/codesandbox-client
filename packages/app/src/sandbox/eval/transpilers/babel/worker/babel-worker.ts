@@ -594,10 +594,10 @@ try {
   self.importScripts(
     process.env.NODE_ENV === 'development'
       ? `${
-          process.env.CODESANDBOX_HOST || ''
+          process.env.CODESANDBOX_HOST || '/i2c'
         }/static/js/babel.${BABEL7_VERSION}.js`
       : `${
-          process.env.CODESANDBOX_HOST || ''
+          process.env.CODESANDBOX_HOST || '/i2c'
         }/static/js/babel.${BABEL7_VERSION}.min.js`
   );
 
@@ -642,7 +642,7 @@ async function initBabel(opts) {
     loadCustomTranspiler(babelUrl, babelEnvUrl);
   } else if (version !== 7) {
     loadCustomTranspiler(
-      `${process.env.CODESANDBOX_HOST || ''}/static/js/babel.6.26.min.js`
+      `${process.env.CODESANDBOX_HOST || '/i2c'}/static/js/babel.6.26.min.js`
     );
   }
 

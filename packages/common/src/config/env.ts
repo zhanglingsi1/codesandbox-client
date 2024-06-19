@@ -31,5 +31,7 @@ export default Object.keys(process.env)
       'process.env.DEV_DOMAIN': JSON.stringify(
         process.env.DEV_DOMAIN || 'codesandbox.test'
       ),
+      'process.env.PUBLIC_URL': JSON.stringify('/i2c'),
+      // 'process.env.CODESANDBOX_HOST': JSON.stringify('/i2c'),
     }
   );

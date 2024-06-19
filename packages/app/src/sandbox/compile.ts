@@ -62,13 +62,16 @@ export function getHTMLParts(html: string) {
   if (html.includes('<body>')) {
     const bodyMatcher = /<body.*>([\s\S]*)<\/body>/m;
     const headMatcher = /<head>([\s\S]*)<\/head>/m;
+    const scriptMatcher = /<script>([\s\S]*)<\/script>/m;
 
     const headMatch = html.match(headMatcher);
     const bodyMatch = html.match(bodyMatcher);
+    const scriptMatch = html.match(scriptMatcher);
     const head = headMatch && headMatch[1] ? headMatch[1] : '';
     const body = bodyMatch && bodyMatch[1] ? bodyMatch[1] : html;
+    const externalScript = scriptMatch && scriptMatch[1] ? scriptMatch[1] : '';
 
-    return { body, head };
+    return { body, head, externalScript };
   }
 
   return { head: '', body: html };
@@ -585,6 +588,7 @@ async function compile(opts: CompileOptions) {
   actionsEnabled = hasActions;
 
   let managerModuleToTranspile = null;
+  let staticModulesArr = [];
   try {
     const templateDefinition = getDefinition(template);
     const configurations = parseConfigurations(
@@ -645,8 +649,16 @@ async function compile(opts: CompileOptions) {
       });
     }
 
+    const parsedSandboxJSON = configurations.sandbox.parsed;
+    const { externals = {}, staticModules = [] } = parsedSandboxJSON;
+    if (staticModules.length) {
+      staticModules.forEach(itemPath => {
+        staticModulesArr.push(modules[absolute(itemPath)]);
+      });
+    }
     const { manifest, isNewCombination } = await loadDependencies(
       dependencies,
+      externals,
       ({ done, total, remainingDependencies }) => {
         if (!showLoadingScreen) {
           return;
@@ -714,7 +726,6 @@ async function compile(opts: CompileOptions) {
     const foundMain = isModuleView
       ? entry
       : possibleEntries.find(p => Boolean(modules[p]));
-
     if (!foundMain) {
       throw new Error(
         `Could not find entry file: ${possibleEntries[0]}. You can specify one in package.json by defining a \`main\` property.`
@@ -734,8 +745,13 @@ async function compile(opts: CompileOptions) {
 
     dispatch({ type: 'status', status: 'transpiling' });
     manager.setStage('transpilation');
-
+    console.log(">>>>>>getTranspiledModules", manager.getTranspiledModules());
     await manager.verifyTreeTranspiled();
+    if (staticModulesArr.length) {
+      for (let i = 0; i < staticModulesArr.length; i += 1) {
+        await manager.transpileModules(staticModulesArr[i]);
+      }
+    }
     await manager.transpileModules(managerModuleToTranspile);
 
     metrics.endMeasure('transpilation', { displayName: 'Transpilation' });
@@ -765,7 +781,7 @@ async function compile(opts: CompileOptions) {
       } catch (e) {
         /* no */
       }
-
+      let externalS = "";
       await manager.preset.preEvaluate(manager, updatedModules);
 
       if (!manager.webpackHMR) {
@@ -779,8 +795,9 @@ async function compile(opts: CompileOptions) {
         if (htmlModule && htmlModule.code) {
           html = htmlModule.code;
         }
-        const { head, body } = getHTMLParts(html);
+        const { head, body, externalScript } = getHTMLParts(html);
 
+        externalS = externalScript;
         if (lastHeadHTML && lastHeadHTML !== head) {
           document.location.reload();
         }
@@ -822,15 +839,43 @@ async function compile(opts: CompileOptions) {
         lastBodyHTML = body;
         lastHeadHTML = head;
       }
-
       metrics.measure('external-resources');
+      if (
+        parsedSandboxJSON.externalResources &&
+        Array.isArray(parsedSandboxJSON.externalResources)
+      ) {
+        parsedSandboxJSON.externalResources.forEach(r => {
+          if (!externalResources.includes(r)) {
+            externalResources.push(r);
+          }
+        });
+      }
+      // 等待 js/css 资源完全加载后才会 resolve（通过 window 的 load 事件--页面所有资源包括图片加载完成触发）
+      // 详细逻辑请查看 handleExternalResources 函数中的 waitForLoaded
       await handleExternalResources(externalResources);
       metrics.endMeasure('external-resources', {
         displayName: 'External Resources',
       });
 
+      if (externalS) {
+        var s = document.createElement("script");
+        s.type = "text/javascript";
+        s.text = externalS;
+        document.body.appendChild(s);
+      }
+
+
       const oldHTML = document.body.innerHTML;
       metrics.measure('evaluation');
+      // 执行编译静态模块代码
+      if (staticModulesArr.length) {
+        staticModulesArr.forEach(module => {
+          manager.evaluateModule(module, {
+            force: isModuleView,
+          });
+        })
+      }
+      // 执行编译后的模块代码
       const evalled = manager.evaluateModule(managerModuleToTranspile, {
         force: isModuleView,
       });

@@ -2,7 +2,7 @@ import { ChildHandler } from '../worker-transpiler/child-handler';
 
 self.importScripts(
   `${
-    process.env.CODESANDBOX_HOST || ''
+    process.env.CODESANDBOX_HOST || '/i2c'
   }/static/js/browserified-pug.0.1.0.min.js`
 );
 

@@ -6,7 +6,7 @@ export default () => {
   }
 
   if (IS_LOCAL_SERVER) {
-    return 'http://localhost:3000';
+    return 'http://localhost:3000/i2c';
   }
 
   if (process.env.NODE_ENV === 'development') {

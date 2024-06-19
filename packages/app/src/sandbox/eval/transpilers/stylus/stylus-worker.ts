@@ -3,7 +3,7 @@ import { ChildHandler } from '../worker-transpiler/child-handler';
 const childHandler = new ChildHandler('stylus-worker');
 
 self.importScripts(
-  `${process.env.CODESANDBOX_HOST || ''}/static/js/stylus.min.js`
+  `${process.env.CODESANDBOX_HOST || '/i2c'}/static/js/stylus.min.js`
 );
 
 declare const stylus: {

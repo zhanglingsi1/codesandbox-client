@@ -4,7 +4,7 @@ import { isUrl } from '@codesandbox/common/lib/utils/is-url';
 
 /* eslint-disable import/default */
 // @ts-ignore
-import BabelWorker from 'worker-loader?publicPath=/&name=babel-transpiler.[hash:8].worker.js!./worker/index';
+import BabelWorker from 'worker-loader?publicPath=/i2c/&name=babel-transpiler.[hash:8].worker.js!./worker/index';
 
 import delay from '@codesandbox/common/lib/utils/delay';
 import { endMeasure, measure } from '@codesandbox/common/lib/utils/metrics';
@@ -16,6 +16,7 @@ import { convertEsModule } from './ast/convert-esmodule';
 import { ESTreeAST, generateCode, parseModule } from './ast/utils';
 import { collectDependenciesFromAST } from './ast/collect-dependencies';
 import { rewriteImportMeta } from './ast/rewrite-meta';
+import replaceImportPathAliases from './replace-import-path-aliases';
 
 const MAX_WORKER_ITERS = 100;
 
@@ -23,7 +24,10 @@ interface TranspilationResult {
   transpiledCode: string;
 }
 
-const WORKER_COUNT = process.env.SANDPACK ? 1 : 3;
+// const WORKER_COUNT = process.env.SANDPACK ? 1 : 3;
+
+// 改动----无论是否是 SANDPACK，均使用 3 个线程运行 babel
+const WORKER_COUNT = 3;
 
 interface IDep {
   path: string;
@@ -159,6 +163,15 @@ class BabelTranspiler extends WorkerTranspiler {
           );
           console.warn(err);
         }
+      }
+    }
+
+    if (!isNodeModule) {
+      const { alias } = loaderContext.options.configurations.sandbox.parsed;
+      // 如果待构建的前端项目中使用了别名，则用真实路径替换源码中的别名
+      if (alias && Object.keys(alias).length > 0) {
+        // eslint-disable-next-line no-param-reassign
+        code = replaceImportPathAliases(code, alias);
       }
     }
 
