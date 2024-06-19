@@ -1,3 +1,28 @@
+### code-sandbox-client托管至本地
+
+[Hosting the Bundler](https://sandpack.codesandbox.io/docs/guides/hosting-the-bundler)
+
+
+```bash
+yarn install
+```
+
+```bash
+yarn build:deps
+```
+
+```bash
+yarn build:sandpack
+```
+
+本地启动编译产物(根目录下的/www目录)，即为code-sandbox-client bundler
+
+<span style="color: red;">注意：</span>
+
+- node版本不要高于16
+
+
+
 <p align="center">
   <a href="https://codesandbox.io">
     <img src="https://codesandbox.io/static/img/banner.png?v=2" height="300px">
