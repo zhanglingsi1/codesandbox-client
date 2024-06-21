@@ -62,7 +62,7 @@ if (isIFramePreview) {
   // and this is the simplest way to achieve that. Later everything will be V2 preview protocol
   (function LoadV2PreviewProtocol() {
     const script = document.createElement('script');
-    script.src = 'https://codesandbox.io/p/preview-protocol.js';
+    script.src = `${process.env.PUBLIC_URL}/protocol/preview-protocol.js`;
     script.async = true;
     script.defer = true;
     (document.head || document.documentElement).prepend(script);
@@ -71,7 +71,7 @@ if (isIFramePreview) {
   // This script is used to enable Chrome DevTools functionality
   (function ChromeDevtools() {
     const script = document.createElement('script');
-    script.src = 'https://codesandbox.io/p/chrome-devtool/protocol/index.js';
+    script.src = `${process.env.PUBLIC_URL}/protocol/chrome-devtool/index.js`;
 
     script.onload = () => {
       const devtoolProtocol = window.chobitsu;

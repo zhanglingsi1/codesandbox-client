@@ -19,7 +19,7 @@ yarn build:sandpack
 
 <span style="color: red;">注意：</span>
 
-- node版本不要高于16
+- node@16.14.0
 
 
 

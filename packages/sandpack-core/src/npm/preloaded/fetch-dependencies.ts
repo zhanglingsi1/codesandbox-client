@@ -1,5 +1,6 @@
 import _debug from '@codesandbox/common/lib/utils/debug';
 import { getAbsoluteDependency } from '@codesandbox/common/lib/utils/dependencies';
+import { dispatch } from 'codesandbox-api';
 import { ILambdaResponse } from '../merge-dependency';
 
 import delay from '../../utils/delay';
@@ -13,12 +14,6 @@ const debug = _debug('cs:sandbox:packager');
 
 const VERSION = 2;
 
-// eslint-disable-next-line
-const DEV_URLS = {
-  packager:
-    'https://xi5p9f7czk.execute-api.eu-west-1.amazonaws.com/dev/packages',
-  bucket: 'https://dev-packager-packages.codesandbox.io',
-};
 // eslint-disable-next-line
 const PROD_URLS = {
   packager:
@@ -136,6 +131,10 @@ export async function getDependency(
     const bucketManifest = await callApi(fullUrl);
     return bucketManifest;
   } catch (e) {
+    // 网络问题，抛出异常提示
+    if (fullUrl.includes('https://prod-packager-packages.codesandbox.io/')) {
+      dispatch({ type: 'fetch-babel-error' });
+    }
     // The dep has not been generated yet...
     const packagerRequestUrl = `${PACKAGER_URL}/${dependencyUrl}`;
     await requestPackager(packagerRequestUrl, 'POST');
